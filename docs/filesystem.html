@@ -1,0 +1,28 @@
+<!--
+title: File system
+description: The file organisation on the BMRC cluster
+published: true
+date: 2021-07-05T09:44:56.843Z
+tags: 
+editor: code
+dateCreated: 2021-06-25T15:16:14.633Z
+-->
+
+<h1>File system</h1>
+<h2>Files organisation</h2>
+<p>On the BMRC cluster, there are two folders for each user - home folder and file folder.</p>
+<p>Your home folder will be located at /users/&lt;group&gt;/&lt;username&gt; - with &lt;group&gt; and &lt;username&gt; being your group name and username, which is a random combination of three letters and three numbers for data security reasons. The size of this folder is limited to 10GB - you should use it only for storing essential configuration files which software often expects to find there, like the Bash configuration file .bashrc.</p>
+<p>Your folder for general files will be located at /well/&lt;group&gt;/users/&lt;username&gt;. Please use this folder to store your code, results of data analysis and other files.</p>
+<blockquote>
+  <p>Symbolic links are set up in your home folder for convenience to point to the location in the file folder to organise the files according to their functionality or use, such as code development (devel), data storage (archive, mirror) and data analysis (work)</p>
+</blockquote>
+<p>These are:</p>
+<p>devel -&gt;&nbsp;/well/&lt;group&gt;/users/&lt;username&gt;/devel</p>
+<p>notebooks&nbsp;-&gt;&nbsp;/well/&lt;group&gt;/users/&lt;username&gt;/notebooks</p>
+<p>work -&gt;&nbsp;/well/&lt;group&gt;/users/&lt;username&gt;/work</p>
+<p>archive -&gt;&nbsp;/well/&lt;group&gt;/archive</p>
+<p>The mirror folder is linked to&nbsp;/well/kir/mirror – the location of shared external database data.</p>
+<p>Each group has folders for sharing data within the group, called projects, and between different groups, called shared. They are located at /well/&lt;group&gt;</p>
+<h2><strong>Storage quota</strong></h2>
+<p>The storage folder at /well/group/users/&lt;username&gt; shares in your group's allocation for disk space so please use the space responsibly. Compress the files when not in use or for longer term storage.</p>
+<p>Button test</p>
