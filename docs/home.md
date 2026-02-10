@@ -2,7 +2,7 @@
 title: Research Computing at the Kennedy Institute of Rheumatology
 description: Computational resources at the Kennedy Institute
 published: true
-date: 2026-01-13T10:39:14.023Z
+date: 2026-02-10T09:38:24.727Z
 tags: 
 editor: markdown
 dateCreated: 2021-06-25T09:54:12.658Z
@@ -24,6 +24,8 @@ The services include:
 - On-premise cloud computing (OpenStack)
 - Training and workshops on using these facilities
 
+<br>
+
 ### Rules and regulations
 
 Access to the HPC systems and services are provided for authorised work purposes only. 
@@ -31,6 +33,8 @@ Access to the HPC systems and services are provided for authorised work purposes
 In using them you are bound by the terms and conditions of the [University of Oxford's IT Regulations](https://governance.admin.ox.ac.uk/legislation/it-regulations-1-of-2002), the [NDORMS Information Security Policy](https://www.ndorms.ox.ac.uk/information-security-policy) and you must follow the [KIR Information Governance Policy](information_governance).
 
  Where necessary, and within the relevant laws and regulations, the Kennedy Institute and the University of Oxford reserve the right to exercise control over all activities employing its computer facilities, including examining the content of users' data.
+
+<br>
 
 ### Cluster overview
 
