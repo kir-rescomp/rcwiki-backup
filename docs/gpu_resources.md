@@ -2,7 +2,7 @@
 title: GPU resources
 description: Using available GPU resources on the cluster
 published: true
-date: 2026-01-13T10:29:30.479Z
+date: 2026-04-15T10:41:32.065Z
 tags: gpu
 editor: markdown
 dateCreated: 2023-03-15T12:14:31.689Z
@@ -16,22 +16,36 @@ The BMRC cluster provides GPU-accelerated compute nodes for machine learning, de
 
 Due to rapidly evolving hardware capabilities, our GPU nodes have considerable variation in CPU, RAM, and GPU configurations. This guide will help you understand the available resources and how to request them efficiently.
 
+* For more  information on GPU and GPU profiling, refer to https://kir-rescomp.github.io/training-gpu-profiling/
+
 ---
 
 ## GPU Partitions
 
 GPU resources are available through three Slurm partitions:
 
-| Partition | Purpose | Time Limit | Nodes Available |
-|-----------|---------|------------|-----------------|
-| `gpu_interactive` | Interactive development and testing | 12 hours | 2 nodes (compg009, compg010) with P100 GPUs |
-| `gpu_short` | General batch jobs, short runs | 4 hours | All GPU nodes |
-| `gpu_long` | Long-running batch jobs | 60 hours | Subset of GPU nodes |
+**Partition Table**
 
-> **Partition Selection**
-> - Use `gpu_interactive` for code development, debugging, and interactive work
-> - Use `gpu_short` whenever possible for batch jobs (it has access to all nodes)
-> - Use `gpu_long` only for jobs that genuinely need more than 4 hours (limited node availability)
+| Partition                  | NUM_GPU | GPU_MEMORY (GB) | Weight | Max Runtime (Hours) | CPUs (Default) | Memory (GB, Default) |
+| -------------------------- | ------- | --------------- | ------ | ------------------- | -------------- | -------------------- |
+| **Batch Partitions**       |         |                 |        |                     |                |                      |
+| `gpu_a100_80gb`            | 24      | 80              | 1.00   | 60                  | 11             | 120                  |
+| `gpu_rtx8000_48gb`         | 12      | 48              | 0.72   | 60                  | 7              | 185                  |
+| `gpu_a100_40gb`            | 16      | 40              | 0.89   | 60                  | 7              | 90                   |
+| `gpu_v100_32gb`            | 2       | 32              | 0.89   | 60                  | 7              | 750                  |
+| `gpu_p100_16gb`            | 12      | 16              | 0.66   | 60                  | 5              | 90                   |
+| `gpu_v100_16gb`            | 4       | 16              | 0.70   | 60                  | 11             | 60                   |
+| `gpu_gh200_144gb`          | 40      | 144             | 2.12   | TBD                 | 72             | TBD                  |
+| **Interactive Partitions** |         |                 |        |                     |                |                      |
+| `gpu_interactive`                | 18      | 24              | 0.59   | 12                  | 7              | 80                   |
+
+**Partition Selection**
+
+- Use `gpu_inter` for interactive development, debugging, and testing (12-hour limit)
+- Use a batch partition for non-interactive workloads — prefer partitions with sufficient GPU memory for your job rather than the largest available
+- `gpu_gh200_144gb` is the highest-weight partition; runtime limits are still to be confirmed
+- `gpu_v100_32gb` has a very high default memory allocation (750 GB) — only request what your job actually needs
+
 {.is-info}
 
 ---
@@ -53,11 +67,11 @@ BMRCluster includes five generations of NVIDIA GPUs as of 13.01.2026:
 
 ### GPU Distribution by Partition
 
-#### gpu_short Partition
+
 
 ```bash
 # View GPUs in gpu_short partition
-sinfo -p gpu_short -o "%N %G" -N
+sinfo -p gpu_interactive -o "%N %G" -N
 ```
 
 | GPU Type | GPU Memory | Nodes | GPUs/Node | Total GPUs |
@@ -69,21 +83,6 @@ sinfo -p gpu_short -o "%N %G" -N
 | a100-pcie-40gb | 40GB | compg031, compg032 | 4 | 8 |
 | a100-pcie-80gb | 80GB | compg035, compg036, compg039-042 | 4 | 24 |
 
-#### gpu_long Partition
-
-```bash
-# View GPUs in gpu_long partition
-sinfo -p gpu_long -o "%N %G" -N
-```
-
-| GPU Type | GPU Memory | Nodes | GPUs/Node | Total GPUs |
-|----------|------------|-------|-----------|------------|
-| p100-sxm2-16gb | 16GB | compg009, compg010, compg011 | 4 | 12 |
-| v100-pcie-32gb | 32GB | compg016 | 2 | 2 |
-| quadro-rtx6000 | 24GB | compg019 | 4 | 4 |
-| quadro-rtx8000 | 48GB | compg028, compg029 | 4 | 8 |
-| a100-pcie-40gb | 40GB | compg031, compg032, compg033 | 4 | 12 |
-| a100-pcie-80gb | 80GB | compg035, compg036, compg039-041 | 4 | 20 |
 
 ### Detailed Node Specifications
 
@@ -118,25 +117,41 @@ sinfo -p gpu_long -o "%N %G" -N
 
 ## Submitting GPU Jobs
 
+#### ⚠️ NOTE  : From 13.04.2026 on-wards, all GPU jobs will require us to specify the Slurm account `gpu_kir.prj` .i.e.
+
+- If it is a `srun` session,
+
+```bash
+srun --account gpu_kir.prj....
+```
+or the short-hand `srun -A gpu_kir.prj` 
+
+- If it is a `sbatch` script, 
+
+```
+#SBATCH --account gpu_kir.prj
+```
+
+
 ### Basic GPU Request
 
 The recommended methods for requesting GPUs are `--gres` or `--gpus-per-node`:
 
 **Using --gres (Generic Resource Scheduling):**
 ```bash
-sbatch -p gpu_short --gres gpu:N your_script.sh
+sbatch --account gpu_kir.prj -p gpu_v100_16gb --gres gpu:N your_script.sh
 ```
 
 **Using --gpus-per-node:**
 ```bash
-sbatch -p gpu_short --gpus-per-node N your_script.sh
+sbatch --account gpu_kir.prj -p gpu_v100_16gb --gpus-per-node N your_script.sh
 ```
 
 Where `N` is the number of GPUs required per node (maximum of 4 on most nodes).
 
 **Example:**
 ```bash
-sbatch -p gpu_short --gres gpu:1 train_model.sh
+sbatch --account gpu_kir.prj -p gpu_v100_16gb --gres gpu:1 train_model.sh
 ```
 
 ### Understanding Command Syntax
@@ -144,24 +159,24 @@ sbatch -p gpu_short --gres gpu:1 train_model.sh
 When checking GPU availability with `sinfo`:
 
 ```bash
-sinfo -p gpu_short -o "%N %G" -N
+sinfo --account gpu_kir.prj -p gpu_v100_16gb -o "%N %G" -N
 ```
 
 - `sinfo` - Query Slurm partition and node information
-- `-p gpu_short` - Specify partition to query
+- `-p gpu_v100_16gb` - Specify partition to query
 - `-o "%N %G"` - Output format:
   - `%N` - Node name
   - `%G` - Generic resources (GRES), showing GPU specifications
 - `-N` - Node-oriented format (one line per node)
 
-### Requesting Specific GPU Types
+### Requesting Specific GPU Types - Only needed for `gpu_interactive` 
 
 You can request a particular GPU model using the full GRES specification:
 
 ```bash
-sbatch -p gpu_short --gres gpu:a100-pcie-80gb:1 your_script.sh
+sbatch -p  --gres gpu:a100-pcie-80gb:1 your_script.sh
 ```
-
+`gpu_interactive` is the only partition with multiple GPU types, 
 This requests 2 A100 80GB GPUs.
 
 ### Using GPU Constraints (Recommended)
@@ -169,7 +184,7 @@ This requests 2 A100 80GB GPUs.
 Constraints allow you to specify acceptable GPU classes, giving the scheduler flexibility while meeting your requirements:
 
 ```bash
-sbatch -p gpu_short --gpus-per-node 1 --constraint "a100|rtx8000" your_script.sh
+sbatch -p gpu_interactive --gpus-per-node 1 --constraint "a100|rtx8000" your_script.sh
 ```
 
 **Available constraint features:**
@@ -208,7 +223,7 @@ sbatch -p gpu_short --gpus-per-node 2 --constraint "rtx8000|a100" your_script.sh
 
 **Method 1: Use constraints (Recommended)**
 ```bash
-sbatch -p gpu_short --gpus-per-node 1 --constraint "v100|rtx6000|rtx8000|a100" your_script.sh
+sbatch -p  --gpus-per-node 1 --constraint "v100|rtx6000|rtx8000|a100" your_script.sh
 ```
 
 **Method 2: Request specific GPU types**
@@ -268,14 +283,14 @@ srun -p gpu_interactive --gres gpu:1 --pty bash
 
 ```bash
 #!/bin/bash
-#SBATCH -p gpu_short
-#SBATCH --gres gpu:1
-#SBATCH --constraint "rtx8000|a100"
-#SBATCH --mem 64G
-#SBATCH -c 8
-#SBATCH -J my_training_job
-#SBATCH -o logs/%j.out
-#SBATCH -e logs/%j.err
+
+#SBATCH --account				gpu_kir.prj
+#SBATCH --partition 		gpu_a100_80gb
+#SBATCH --gpus-per-node 1
+#SBATCH --mem 					64G
+#SBATCH --cpus-per-task 8
+#SBATCH --job-name 			my_training_job
+#SBATCH --output			 logs/%j.out
 
 # Load modules
 module load Python/3.11.3-GCCcore-12.3.0
@@ -291,12 +306,13 @@ python train_model.py --epochs 50 --batch-size 32
 
 ```bash
 #!/bin/bash
-#SBATCH -p gpu_short
-#SBATCH --gres gpu:4
-#SBATCH --constraint "a100"
-#SBATCH --mem 200G
-#SBATCH -c 32
-#SBATCH -J multi_gpu_training
+
+#SBATCH --account				gpu_kir.prj
+#SBATCH --partition			gpu_a100_40gb
+#SBATCH --gres 					gpu:4
+#SBATCH --mem 					200G
+#SBATCH --cpus-per-task 32
+#SBATCH --job-name			multi_gpu_training
 
 module load Python/3.11.3-GCCcore-12.3.0
 source ~/venvs/pytorch/bin/activate
@@ -309,11 +325,13 @@ torchrun --nproc_per_node=4 train_distributed.py
 
 ```bash
 #!/bin/bash
-#SBATCH -p gpu_short
-#SBATCH --gres gpu:quadro-rtx8000:2
-#SBATCH --mem-per-gpu 150G
-#SBATCH -c 16
-#SBATCH -J memory_intensive
+
+#SBATCH --account				gpu_kir.prj
+#SBATCH --partition 		gpu_rtx8000_48gb
+#SBATCH --gpus-per-node	2
+#SBATCH --mem-per-gpu 	150G
+#SBATCH --cpus-per-task 16
+#SBATCH --job-name		 	memory_intensive
 
 module load Python/3.11.3-GCCcore-12.3.0
 source ~/venvs/tensorflow/bin/activate
@@ -357,19 +375,17 @@ python train_large_model.py
 
 ```bash
 # View available GPUs in a partition
-sinfo -p gpu_short -o "%N %G" -N
+sinfo -p gpu_v100_16gb -o "%N %G" -N
 
 # Check GPU queue status
-squeue -p gpu_short
+squeue -p gpu_v100_16gb
 
 # Submit basic GPU job
-sbatch -p gpu_short --gres gpu:1 script.sh
+sbatch --account gpu_kir.prj --partition gpu_v100_16gb --gres gpu:1 script.sh
 
-# Submit job excluding P100s
-sbatch -p gpu_short --gpus-per-node 1 --constraint "a100|rtx8000" script.sh
 
 # Interactive session
-srun -p gpu_interactive --gres gpu:1 --pty bash
+srun --account gpu_kir.prj --partition gpu_interactive --gres gpu:1 --pty bash
 
 # Check GPU usage (when on a GPU node)
 nvidia-smi
@@ -414,10 +430,10 @@ nvidia-smi
 **Modify CPU allocation:**
 ```bash
 # Specify CPUs per GPU
-sbatch -p gpu_short --gres gpu:2 --cpus-per-gpu 4 your_script.sh
+sbatch -p gpu_v100_16gb --gres gpu:2 --cpus-per-gpu 4 your_script.sh
 
 # Or specify total CPUs for the job
-sbatch -p gpu_short --gres gpu:2 -c 16 your_script.sh
+sbatch -p gpu_v100_16gb --gres gpu:2 -c 16 your_script.sh
 ```
 
 ### System Memory (RAM)
@@ -430,10 +446,10 @@ sbatch -p gpu_short --gres gpu:2 -c 16 your_script.sh
 
 ```bash
 # Specify RAM per GPU
-sbatch -p gpu_short --gres gpu:2 --mem-per-gpu 100G your_script.sh
+sbatch -p gpu_v100_16gb --gres gpu:2 --mem-per-gpu 100G your_script.sh
 
 # Or specify total RAM for the job
-sbatch -p gpu_short --gres gpu:2 --mem 200G your_script.sh
+sbatch -p gpu_v100_16gb --gres gpu:2 --mem 200G your_script.sh
 ```
 
 **Example:** Requesting 2 GPUs will give you 120GB RAM by default (60GB × 2).
